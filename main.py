@@ -1,15 +1,26 @@
-def decorate(f):
-    def wrap():
-        print("*" * 10)
-        f()
-        print("*" * 10)
+from typing import Any, Callable
 
-    return wrap
+routes: dict[str, Callable[[Any], Any]] = {}
 
 
-@decorate
-def log():
-    print("Alo")
+def get(path):
+    def fun(func):
+        routes[path] = func
+        return func
+
+    return fun
 
 
-log()
+@get("home")
+def get_home():
+    return "Home Sweet Home"
+
+
+res = ""
+
+while res != "quit":
+    res = input("> ")
+    if res in routes:
+        print(routes[res]())
+    else:
+        print("No Idea")
