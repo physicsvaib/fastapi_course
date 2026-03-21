@@ -1,0 +1,38 @@
+[
+    {
+        "id": 123,
+        "content": "cargo",
+        "weight": 20.2,
+        "status": "in_transit"
+    },
+    {
+        "id": 124,
+        "content": "cargo",
+        "weight": 1.2,
+        "status": "placed"
+    },
+    {
+        "id": 125,
+        "content": "cargo",
+        "weight": 21.52,
+        "status": "in_transit"
+    },
+    {
+        "id": 126,
+        "content": "food",
+        "weight": 4.2,
+        "status": "placed"
+    },
+    {
+        "id": 127,
+        "content": "utils",
+        "weight": 10.2,
+        "status": "delivered"
+    },
+    {
+        "id": 128,
+        "content": "food",
+        "weight": 14.6,
+        "status": "placed"
+    }
+]

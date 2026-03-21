@@ -15,4 +15,4 @@ class Shipment(BaseModel):
     weight: float = Field(
         lt=250, description="Expected weight here, a bit fuzzy are we"
     )
-    status: ShipmentStatus = Field(default=ShipmentStatus.booked)
+    status: ShipmentStatus = Field(default=ShipmentStatus.placed)

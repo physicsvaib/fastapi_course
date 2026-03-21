@@ -2,17 +2,14 @@ from fastapi import FastAPI, status, HTTPException
 from scalar_fastapi import get_scalar_api_reference
 from typing import Any, List
 from .schemas import Shipment, ShipmentStatus
+from .db_json import shipment_dict, load_shipments, save_shipments
+from .database import Database
 
 gap = FastAPI()
 
+load_shipments()
 
-shipment_dict = {
-    123: {"content": "cargo", "status": "in_transit", "weight": 20.2},
-    124: {"content": "cargo", "status": "placed", "weight": 1.2},
-    125: {"content": "cargo", "status": "in_transit", "weight": 21.52},
-    126: {"content": "food", "status": "placed", "weight": 4.2},
-    127: {"content": "utils", "status": "delivered", "weight": 10.2},
-}
+db = Database("Ship")
 
 
 @gap.get("/scalar", include_in_schema=False)
@@ -22,53 +19,37 @@ def get_scalar_api():
 
 
 @gap.get("/shipment", response_model=Shipment)
-def get_shipment(id: int):
-    if id in shipment_dict:
-        return shipment_dict[id]
+def get_shipment(id: int) -> dict[str, Any]:
+    res = db.get_data(id)
+    if res is not None:
+        return res
     else:
         raise HTTPException(
-            status.HTTP_404_NOT_FOUND, detail="Given Id Dont exist can we look again"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="What you are looking for is not here",
         )
 
 
 @gap.post("/shipment")
-def post_shipment(data: Shipment) -> dict[str, int]:
-
-    id = max(shipment_dict.keys()) + 1
-    shipment_dict[id] = {
-        "content": data.content,
-        "status": "placed",
-        "weight": data.weight,
-    }
-
-    return {"id": id}
+def post_shipment(data: Shipment) -> dict[str, Any]:
+    return db.insert_data(data)
 
 
-@gap.get("/shipment/{field}")
-def get_shipment_field(field: str, id: int) -> dict[str, Any]:
-    return {field: shipment_dict[id][field]}
+# @gap.get("/shipment/{field}")
+# def get_shipment_field(field: str, id: int) -> dict[str, Any]:
+#     return {field: shipment_dict[id][field]}
 
 
 @gap.put("/shipment")
 def update_shipment_status(id: int, del_status: ShipmentStatus):
-    if id not in shipment_dict:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="no id found")
-    shipment_dict[id]["status"] = del_status
-    return shipment_dict[id]
+    db.update_data(id, del_status.value)
 
 
 @gap.delete("/shipment")
-def delete_shipment(id: int) -> dict[str, str]:
-    if id in shipment_dict:
-        shipment_dict.pop(id)
-        return {"detail": f"deleted id {id}"}
-    else:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            detail="The thing you are looking for is not here",
-        )
+def delete_shipment(id: int):
+    db.delete_data(id)
 
 
-@gap.get("/all_shipments")
-def get_all_shipments() -> dict[str, List[int]]:
-    return {"keys": [i for i in shipment_dict.keys()]}
+# @gap.get("/all_shipments")
+# def get_all_shipments() -> dict[str, List[int]]:
+#     return {"keys": [i for i in shipment_dict.keys()]}
