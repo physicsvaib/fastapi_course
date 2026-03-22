@@ -1,15 +1,28 @@
 import sqlite3
-from .schemas import Shipment
+from .db_models.models import Shipment, ShipmentStatus
 from typing import Any
+from contextlib import contextmanager
 
 
 class Database:
+    # def __init__(self, table_name):
+    table_name = "Ship"
+
     def __init__(self, table_name):
+        self.table_name = table_name
         self.db = sqlite3.connect("app/data/base.db", check_same_thread=False)
         self.cursor = self.db.cursor()
-        self.table_name = table_name
+
+    # def __enter__(self):
+    #     return self
+
+    # def __exit__(self, *args):
+    #     self.close()
 
     def __del__(self):
+        self.close()
+
+    def close(self):
         self.db.close()
 
     def create_table(self):
@@ -60,3 +73,13 @@ class Database:
         self.cursor.execute(f"SELECT * from {self.table_name} where id = {id}")
         row = self.cursor.fetchone()
         return {"id": row[0], "content": row[1], "weight": row[2], "status": row[3]}
+
+
+@contextmanager
+def managed_db():
+    db = Database("Ship")
+    db.create_table()
+
+    yield db
+
+    db.close()
