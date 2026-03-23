@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 from sqlmodel import SQLModel, Field
@@ -11,10 +11,15 @@ class ShipmentStatus(str, Enum):
     placed = "placed"
 
 
+def delivery_time():
+    return datetime.now() + timedelta(days=3)
+
+
 class Shipment(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+    __tablename__ = "shipment"
+
+    id: int = Field(primary_key=True, default=None)
     content: str
     weight: float = Field(le=250)
     destination: int
-    estimated_delivery: datetime
     status: ShipmentStatus = Field(default=ShipmentStatus.placed)

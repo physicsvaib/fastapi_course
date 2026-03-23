@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, status, HTTPException
 from scalar_fastapi import get_scalar_api_reference
-from typing import Any
+
 from .db_models.models import Shipment, ShipmentStatus
-from .db_models.session import create_db_tables
+from .db_models.session import create_db_tables, SessionDep
 
 # from .db_json import shipment_dict, load_shipments, save_shipments
 # from .db_models import Database
@@ -33,8 +34,9 @@ def get_scalar_api():
 
 
 @app.get("/shipment", response_model=Shipment)
-def get_shipment(id: int) -> dict[str, Any]:
-    res = db.get_data(id)
+def get_shipment(id: int, session: SessionDep):
+    res = session.get(Shipment, id)
+
     if res is not None:
         return res
     else:
@@ -45,8 +47,15 @@ def get_shipment(id: int) -> dict[str, Any]:
 
 
 @app.post("/shipment")
-def post_shipment(data: Shipment) -> dict[str, Any]:
-    return db.insert_data(data)
+def post_shipment(data: Shipment, session: SessionDep) -> dict[str, int]:
+    new_shipment = Shipment(
+        **data.model_dump(),
+    )
+    session.add(new_shipment)
+    session.commit()
+
+    session.refresh(new_shipment)
+    return {"id": new_shipment.id}
 
 
 # @gap.get("/shipment/{field}")
@@ -55,13 +64,21 @@ def post_shipment(data: Shipment) -> dict[str, Any]:
 
 
 @app.put("/shipment")
-def update_shipment_status(id: int, del_status: ShipmentStatus):
-    db.update_data(id, del_status.value)
+def update_shipment_status(id: int, del_status: ShipmentStatus, session: SessionDep):
+    ship = session.get(Shipment, id)
+    ship.status = del_status
+
+    session.add(ship)
+    session.commit()
+    session.refresh(ship)
+
+    return ship
 
 
 @app.delete("/shipment")
-def delete_shipment(id: int):
-    db.delete_data(id)
+def delete_shipment(id: int, session: SessionDep):
+    session.delete(session.get(Shipment, id))
+    session.commit()
 
 
 # @gap.get("/all_shipments")
